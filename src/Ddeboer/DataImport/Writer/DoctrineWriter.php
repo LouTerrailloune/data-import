@@ -74,14 +74,14 @@ class DoctrineWriter extends AbstractWriter
      *
      * @var array
      */
-    protected $primaryKeyFields = array();
+    protected $lookupFields = array();
 
     /**
      * Constructor
      *
      * @param EntityManager $entityManager
      * @param string        $entityName
-     * @param string        $index         Index to find current entities by
+     * @param string|array        $index         Field or fields to find current entities by
      */
     public function __construct(EntityManager $entityManager, $entityName, $index = null)
     {
@@ -91,9 +91,9 @@ class DoctrineWriter extends AbstractWriter
         $this->entityMetadata = $entityManager->getClassMetadata($entityName);
         if($index) {
             if(is_array($index)) {
-                $this->primaryKeyFields = $index;
+                $this->lookupFields = $index;
             } else {
-                $this->primaryKeyFields = array($index);
+                $this->lookupFields = array($index);
             }
         }
     }
@@ -191,12 +191,12 @@ class DoctrineWriter extends AbstractWriter
         $this->counter++;
         $entity = null;
 
-        // If the table was not truncated to begin with, find current entities
+        // If the table was not truncated to begin with, find current entity
         // first
         if (false === $this->truncate) {
-            if ($this->primaryKeyFields) {
+            if ($this->lookupFields) {
                 $lookupConditions = array();
-                foreach($this->primaryKeyFields as $fieldName) {
+                foreach($this->lookupFields as $fieldName) {
                     $lookupConditions[$fieldName] = $item[$fieldName];
                 }
                 $entity = $this->entityRepository->findOneBy(

@@ -70,6 +70,13 @@ class DoctrineWriter extends AbstractWriter
     protected $truncate = true;
 
     /**
+     * List of fields used to lookup an entity
+     *
+     * @var array
+     */
+    protected $primaryKeyFields = array();
+
+    /**
      * Constructor
      *
      * @param EntityManager $entityManager
@@ -82,7 +89,13 @@ class DoctrineWriter extends AbstractWriter
         $this->entityName = $entityName;
         $this->entityRepository = $entityManager->getRepository($entityName);
         $this->entityMetadata = $entityManager->getClassMetadata($entityName);
-        $this->index = $index;
+        if($index) {
+            if(is_array($index)) {
+                $this->primaryKeyFields = $index;
+            } else {
+                $this->primaryKeyFields = array($index);
+            }
+        }
     }
 
     public function getBatchSize()
@@ -181,9 +194,13 @@ class DoctrineWriter extends AbstractWriter
         // If the table was not truncated to begin with, find current entities
         // first
         if (false === $this->truncate) {
-            if ($this->index) {
+            if ($this->primaryKeyFields) {
+                $lookupConditions = array();
+                foreach($this->primaryKeyFields as $fieldName) {
+                    $lookupConditions[$fieldName] = $item[$fieldName];
+                }
                 $entity = $this->entityRepository->findOneBy(
-                    array($this->index => $item[$this->index])
+                    $lookupConditions
                 );
             } else {
                 $entity = $this->entityRepository->find(current($item));
